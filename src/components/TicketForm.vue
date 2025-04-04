@@ -26,7 +26,7 @@
               <th>Width (inches)</th>
               <th>Height (inches)</th>
               <th>Length (feet)</th>
-              <th>Price/BF</th>
+              <th>Price/TBF</th>
               <th>Total</th>
               <th></th>
             </tr>
@@ -103,7 +103,7 @@
         const item = this.ticket.items[index];
         // Board Feet calculation: (Width × Height × Length) / 12
         const boardFeet = (item.width * item.height * item.length) / 12;
-        item.total = boardFeet * item.pricePerBF * item.quantity;
+        item.total = boardFeet * (item.pricePerBF)/1000 * item.quantity;
         this.calculateTotal();
       },
       calculateTotal() {
