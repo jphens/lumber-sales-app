@@ -26,7 +26,7 @@
               <th>Width (inches)</th>
               <th>Height (inches)</th>
               <th>Length (feet)</th>
-              <th>Price/TBF</th>
+              <th>Price/MBF</th>
               <th>Total</th>
               <th></th>
             </tr>
