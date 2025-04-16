@@ -31,6 +31,12 @@ const routes = [
     name: 'print-ticket',
     component: PrintTicket,
     props: true
+  },
+  // Catch-all route for 404
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('@/views/NotFound.vue')
   }
 ]
 

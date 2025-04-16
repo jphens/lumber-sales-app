@@ -1,5 +1,14 @@
 <template>
-    <div class="print-ticket">
+  <div class="print-ticket">
+    <div v-if="loading" class="loading d-print-none">
+      Loading ticket data...
+    </div>
+    
+    <div v-else-if="error" class="error d-print-none">
+      Error: {{ error }}
+    </div>
+    
+    <template v-else>
       <div class="print-controls d-print-none">
         <button @click="goBack" class="btn btn-secondary">Back</button>
         <button @click="print" class="btn btn-primary ml-2">Print</button>
@@ -8,9 +17,9 @@
       <div class="ticket-container">
         <div class="company-header">
           <h1>Lumber Sales Receipt</h1>
-          <p>Your Company Name</p>
-          <p>123 Wood Lane, Timber City</p>
-          <p>Phone: (555) 123-4567</p>
+          <p>{{ companyInfo.name }}</p>
+          <p>{{ companyInfo.address }}</p>
+          <p>Phone: {{ companyInfo.phone }}</p>
         </div>
         
         <div class="ticket-details">
@@ -78,104 +87,130 @@
           <p><em>Thank you for your business!</em></p>
         </div>
       </div>
-    </div>
-  </template>
-  
-  <script>
-  export default {
-    name: 'PrintTicket',
-    props: {
-      id: {
-        type: [String, Number],
-        required: true
-      }
-    },
-    data() {
-      return {
-        ticket: {
-          id: '',
-          customerName: '',
-          customerPhone: '',
-          date: '',
-          items: [],
-          total: 0
-        }
-      };
-    },
-    methods: {
-      loadTicket() {
-        const tickets = JSON.parse(localStorage.getItem('tickets') || '[]');
-        const ticket = tickets.find(t => t.id.toString() === this.id.toString());
+    </template>
+  </div>
+</template>
+
+<script>
+import TicketService from '../services/api';
+import config from '../config';
+
+export default {
+  name: 'PrintTicket',
+  props: {
+    id: {
+      type: [String, Number],
+      required: true
+    }
+  },
+  data() {
+    return {
+      ticket: {
+        id: '',
+        customerName: '',
+        customerPhone: '',
+        date: '',
+        items: [],
+        total: 0
+      },
+      companyInfo: config.company,
+      loading: true,
+      error: null
+    };
+  },
+  methods: {
+    async loadTicket() {
+      this.loading = true;
+      
+      try {
+        this.ticket = await TicketService.getTicket(this.id);
         
-        if (ticket) {
-          this.ticket = ticket;
-        } else {
-          alert('Ticket not found!');
+        if (!this.ticket) {
+          this.error = 'Ticket not found!';
           this.$router.push('/list');
         }
-      },
-      calculateBoardFeet(item) {
-        return (item.width * item.height * item.length) / 12;
-      },
-      calculateSubtotal() {
-        return this.ticket.total;
-      },
-      formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString();
-      },
-      print() {
-        window.print();
-      },
-      goBack() {
-        this.$router.push('/list');
+      } catch (error) {
+        this.error = `Failed to load ticket: ${error.message}`;
+        console.error('Error loading ticket:', error);
+      } finally {
+        this.loading = false;
       }
     },
-    created() {
-      this.loadTicket();
+    calculateBoardFeet(item) {
+      return (item.width * item.height * item.length) / 12;
+    },
+    calculateSubtotal() {
+      return this.ticket.total;
+    },
+    formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString();
+    },
+    print() {
+      window.print();
+    },
+    goBack() {
+      this.$router.push('/list');
     }
-  };
-  </script>
+  },
+  created() {
+    this.loadTicket();
+  }
+};
+</script>
+
+<style>
+.print-ticket {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.print-controls {
+  margin-bottom: 20px;
+}
+
+.company-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.company-header p {
+  margin: 0;
+}
+
+.ticket-details {
+  margin-bottom: 20px;
+}
+
+.footer {
+  text-align: center;
+}
+
+.loading, .error {
+  text-align: center;
+  margin: 20px 0;
+  padding: 10px;
+}
+
+.error {
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+}
+
+@media print {
+  .print-controls, .loading, .error {
+    display: none;
+  }
   
-  <style>
+  body {
+    font-size: 12pt;
+  }
+  
   .print-ticket {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
+    padding: 0;
   }
-  
-  .print-controls {
-    margin-bottom: 20px;
-  }
-  
-  .company-header {
-    text-align: center;
-    margin-bottom: 30px;
-  }
-  
-  .company-header p {
-    margin: 0;
-  }
-  
-  .ticket-details {
-    margin-bottom: 20px;
-  }
-  
-  .footer {
-    text-align: center;
-  }
-  
-  @media print {
-    .print-controls {
-      display: none;
-    }
-    
-    body {
-      font-size: 12pt;
-    }
-    
-    .print-ticket {
-      padding: 0;
-    }
-  }
-  </style>
+}
+</style>
